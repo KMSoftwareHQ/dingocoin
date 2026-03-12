@@ -4,8 +4,9 @@ $(package)_download_path=http://download.qt.io/new_archive/qt/5.7/$($(package)_v
 $(package)_suffix=opensource-src-$($(package)_version).tar.gz
 $(package)_file_name=qtbase-$($(package)_suffix)
 $(package)_sha256_hash=95f83e532d23b3ddbde7973f380ecae1bac13230340557276f75f2e37984e410
-$(package)_dependencies=openssl zlib
-$(package)_linux_dependencies=freetype fontconfig libxcb libxkbcommon
+$(package)_dependencies=zlib
+$(package)_linux_dependencies=openssl freetype fontconfig libxcb libxkbcommon
+$(package)_mingw32_dependencies=openssl
 $(package)_build_subdir=qtbase
 $(package)_qt_libs=corelib network widgets gui plugins testlib printsupport
 
@@ -17,6 +18,9 @@ $(package)_patches+=fix_qfontengine_coretext.patch
 $(package)_patches+=fix_qt_pkgconfig.patch
 $(package)_patches+=no-xlib.patch
 $(package)_patches+=backports-1.patch
+$(package)_patches+=fix-clang-enum-constexpr.patch
+$(package)_patches+=fix-libpng-fp-h.patch
+$(package)_patches+=fix-arm64-neon.patch
 
 $(package)_qttranslations_file_name=qttranslations-$($(package)_suffix)
 $(package)_qttranslations_sha256_hash=3a15aebd523c6d89fb97b2d3df866c94149653a26d27a00aac9b6d3020bc5a1d
@@ -72,7 +76,6 @@ $(package)_config_opts += -no-xrender
 $(package)_config_opts += -nomake examples
 $(package)_config_opts += -nomake tests
 $(package)_config_opts += -opensource
-$(package)_config_opts += -openssl-linked
 $(package)_config_opts += -optimized-qmake
 $(package)_config_opts += -pch
 $(package)_config_opts += -pkg-config
@@ -114,6 +117,9 @@ $(package)_config_opts += -no-feature-xmlstreamwriter
 # session manager is intrinsically needed for Windows on 5.7.1
 # disable for macOs and linux only.
 $(package)_config_opts_darwin = -no-feature-sessionmanager
+$(package)_config_opts_darwin += -securetransport
+# Qt 5.7.1 NEON code predates Apple Silicon - undefine __ARM_NEON__ for all Qt builds
+$(package)_cxxflags_aarch64_darwin = -U__ARM_NEON__ -U__ARM_NEON
 $(package)_config_opts_linux = -no-feature-sessionmanager
 
 ifneq ($(build_os),darwin)
@@ -132,11 +138,13 @@ $(package)_config_opts_linux += -system-freetype
 $(package)_config_opts_linux += -no-sm
 $(package)_config_opts_linux += -fontconfig
 $(package)_config_opts_linux += -no-opengl
+$(package)_config_opts_linux += -openssl-linked
 $(package)_config_opts_linux += -dbus-runtime
 $(package)_config_opts_arm_linux  = -platform linux-g++ -xplatform $(host)
 $(package)_config_opts_i686_linux  = -xplatform linux-g++-32
 
 $(package)_config_opts_mingw32 = -no-opengl
+$(package)_config_opts_mingw32 += -openssl-linked
 $(package)_config_opts_mingw32 += -no-dbus
 $(package)_config_opts_mingw32 += -xplatform win32-g++
 $(package)_config_opts_mingw32 += -device-option CROSS_COMPILE="$(host)-"
@@ -187,6 +195,17 @@ define $(package)_preprocess_cmds
   echo "!host_build: QMAKE_CFLAGS     += $($(package)_cflags) $($(package)_cppflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
   echo "!host_build: QMAKE_CXXFLAGS   += $($(package)_cxxflags) $($(package)_cppflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
   echo "!host_build: QMAKE_LFLAGS     += $($(package)_ldflags)" >> qtbase/mkspecs/common/gcc-base.conf && \
+  patch -p1 < $($(package)_patch_dir)/fix-clang-enum-constexpr.patch && \
+  patch -p1 < $($(package)_patch_dir)/fix-libpng-fp-h.patch && \
+  patch -p1 < $($(package)_patch_dir)/fix-arm64-neon.patch && \
+  sed -i.old 's/require_action(inContext != NULL, InvalidContext, err = paramErr);/if (!inContext) return paramErr;/' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old 's/require_action(inBounds != NULL, InvalidBounds, err = paramErr);/if (!inBounds) return paramErr;/' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old 's/require_action(inImage != NULL, InvalidImage, err = paramErr);/if (!inImage) return paramErr;/' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old '/^InvalidImage:/d' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old '/^InvalidBounds:/d' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old '/^InvalidContext:/d' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old 's/return err;/return noErr;/' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
+  sed -i.old '/OSStatus err = noErr;/d' qtbase/src/plugins/platforms/cocoa/qcocoahelpers.mm && \
   sed -i.old "s|QMAKE_CFLAGS            = |!host_build: QMAKE_CFLAGS            = $($(package)_cflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "s|QMAKE_LFLAGS            = |!host_build: QMAKE_LFLAGS            = $($(package)_ldflags) |" qtbase/mkspecs/win32-g++/qmake.conf && \
   sed -i.old "s|QMAKE_CXXFLAGS          = |!host_build: QMAKE_CXXFLAGS            = $($(package)_cxxflags) $($(package)_cppflags) |" qtbase/mkspecs/win32-g++/qmake.conf
@@ -218,6 +237,13 @@ define $(package)_stage_cmds
   $(MAKE) -C qttranslations INSTALL_ROOT=$($(package)_staging_dir) install_subtargets && \
   if `test -f qtbase/src/plugins/platforms/xcb/xcb-static/libxcb-static.a`; then \
     cp qtbase/src/plugins/platforms/xcb/xcb-static/libxcb-static.a $($(package)_staging_prefix_dir)/lib; \
+  fi && \
+  if `test -f qtbase/src/plugins/platforms/cocoa/libqcocoa.a`; then \
+    mkdir -p $($(package)_staging_prefix_dir)/plugins/platforms && \
+    cp qtbase/src/plugins/platforms/cocoa/libqcocoa.a $($(package)_staging_prefix_dir)/plugins/platforms/; \
+  fi && \
+  if `test -f qtbase/lib/libQt5PlatformSupport.a`; then \
+    cp qtbase/lib/libQt5PlatformSupport.a $($(package)_staging_prefix_dir)/lib/; \
   fi
 endef
 

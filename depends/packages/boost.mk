@@ -1,8 +1,8 @@
 package=boost
-$(package)_version=1_63_0
-$(package)_download_path=https://sourceforge.net/projects/boost/files/boost/1.63.0
+$(package)_version=1_81_0
+$(package)_download_path=https://archives.boost.io/release/1.81.0/source
 $(package)_file_name=$(package)_$($(package)_version).tar.bz2
-$(package)_sha256_hash=beae2529f759f6b3bf3f4969a19c2e9d6f0c503edcb2de4a61d1428519fcb3b0
+$(package)_sha256_hash=71feeed900fbccca04a3b4f2f84a7c217186f28a940ed8b7ed4725986baf99fa
 
 define $(package)_set_vars
 $(package)_config_opts_release=variant=release
@@ -10,18 +10,20 @@ $(package)_config_opts_debug=variant=debug
 $(package)_config_opts=--layout=tagged --build-type=complete --user-config=user-config.jam
 $(package)_config_opts+=threading=multi link=static -sNO_BZIP2=1 -sNO_ZLIB=1
 $(package)_config_opts_linux=threadapi=pthread runtime-link=shared
-$(package)_config_opts_darwin=--toolset=darwin-4.2.1 runtime-link=shared
+$(package)_config_opts_darwin=--toolset=clang runtime-link=shared target-os=darwin cxxflags="-isysroot $(shell xcrun --show-sdk-path)" linkflags="-isysroot $(shell xcrun --show-sdk-path)"
 $(package)_config_opts_mingw32=binary-format=pe target-os=windows threadapi=win32 runtime-link=static
 $(package)_config_opts_x86_64_mingw32=address-model=64
 $(package)_config_opts_i686_mingw32=address-model=32
 $(package)_config_opts_i686_linux=address-model=32 architecture=x86
+$(package)_config_opts_aarch64_darwin=address-model=64 architecture=arm
 $(package)_toolset_$(host_os)=gcc
 $(package)_archiver_$(host_os)=$($(package)_ar)
-$(package)_toolset_darwin=darwin
-$(package)_archiver_darwin=$($(package)_libtool)
+$(package)_toolset_darwin=clang
+$(package)_archiver_darwin=$($(package)_ar)
 $(package)_config_libraries=chrono,filesystem,program_options,system,thread,test
-$(package)_cxxflags=-std=c++11 -fvisibility=hidden
+$(package)_cxxflags=-std=c++17 -fvisibility=hidden
 $(package)_cxxflags_linux=-fPIC
+$(package)_cxxflags_darwin=-fPIC
 endef
 
 define $(package)_preprocess_cmds
@@ -29,7 +31,7 @@ define $(package)_preprocess_cmds
 endef
 
 define $(package)_config_cmds
-  ./bootstrap.sh --without-icu --with-libraries=$(boost_config_libraries)
+  ./bootstrap.sh --without-icu --with-libraries=$(boost_config_libraries) --with-toolset=clang
 endef
 
 define $(package)_build_cmds

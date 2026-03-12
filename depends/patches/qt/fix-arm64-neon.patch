@@ -1,0 +1,15 @@
+--- a/qtbase/src/gui/painting/qdrawhelper.cpp
++++ b/qtbase/src/gui/painting/qdrawhelper.cpp
+@@ -40,6 +40,12 @@
+ #include <qmath.h>
+ #include <private/qdrawhelper_p.h>
+
++// Disable NEON on ARM64 macOS - Qt 5.7.1 NEON code predates Apple Silicon
++#if defined(Q_OS_MAC) && defined(__aarch64__) && defined(__ARM_NEON__)
++#undef __ARM_NEON__
++#undef __ARM_NEON
++#endif
++
+ QT_BEGIN_NAMESPACE
+
+ #define MASK(src, a) src = BYTE_MUL(src, a)

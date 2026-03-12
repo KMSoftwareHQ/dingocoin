@@ -9,6 +9,7 @@ define $(package)_set_vars
   $(package)_config_opts=--without-documentation --disable-shared --without-libsodium --disable-curve
   $(package)_config_opts_linux=--with-pic
   $(package)_cxxflags=-std=c++11
+  $(package)_cxxflags_darwin=-Wno-deprecated-declarations
 endef
 
 define $(package)_preprocess_cmds

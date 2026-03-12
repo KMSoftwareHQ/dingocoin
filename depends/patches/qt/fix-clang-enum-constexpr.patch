@@ -1,0 +1,15 @@
+--- a/qtbase/src/corelib/global/qtypetraits.h
++++ b/qtbase/src/corelib/global/qtypetraits.h
+@@ -107,6 +107,12 @@
+ #ifndef QTYPETRAITS_H
+ #define QTYPETRAITS_H
+
++// Clang 16+ has a strict check for enum values in constexpr context
++// which triggers errors in is_unsigned/is_signed templates
++#if defined(__clang__) && __clang_major__ >= 16
++#pragma clang diagnostic ignored "-Wenum-constexpr-conversion"
++#endif
++
+ #include <utility>                  // For pair
+
+ QT_BEGIN_NAMESPACE

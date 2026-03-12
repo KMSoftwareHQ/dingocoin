@@ -13,6 +13,10 @@ $(package)_build_opts_darwin+=AR="$($(package)_libtool)"
 $(package)_build_opts_darwin+=ARFLAGS="-o"
 endef
 
+define $(package)_preprocess_cmds
+  sed -i.bak 's/#.*define fdopen.*NULL.*/#define HAVE_FSEEKO 1/' zutil.h
+endef
+
 define $(package)_config_cmds
   ./configure --static --prefix=$(host_prefix)
 endef

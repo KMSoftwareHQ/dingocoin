@@ -304,7 +304,8 @@ dnl Output: QT_LIBS is prepended or configure exits.
 AC_DEFUN([_BITCOIN_QT_CHECK_STATIC_PLUGINS],[
   AC_MSG_CHECKING(for static Qt plugins: $2)
   CHECK_STATIC_PLUGINS_TEMP_LIBS="$LIBS"
-  LIBS="$2 $QT_LIBS $LIBS"
+  dnl Put plugin library paths before the -l flag so linker can find the library
+  LIBS="$QT_PLUGIN_LIBS $2 $QT_LIBS $LIBS"
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[
     #define QT_STATICPLUGIN
     #include <QtPlugin>
@@ -318,14 +319,18 @@ AC_DEFUN([_BITCOIN_QT_CHECK_STATIC_PLUGINS],[
 dnl Internal. Find paths necessary for linking qt static plugins
 dnl Inputs: bitcoin_qt_got_major_vers. 4 or 5.
 dnl Inputs: qt_plugin_path. optional.
-dnl Outputs: QT_LIBS is appended
+dnl Outputs: QT_LIBS is appended, QT_PLUGIN_LIBS is set with plugin paths
 AC_DEFUN([_BITCOIN_QT_FIND_STATIC_PLUGINS],[
+  QT_PLUGIN_LIBS=""
   if test x$bitcoin_qt_got_major_vers = x5; then
       if test x$qt_plugin_path != x; then
+        QT_PLUGIN_LIBS="-L$qt_plugin_path/platforms"
         QT_LIBS="$QT_LIBS -L$qt_plugin_path/platforms"
         if test -d "$qt_plugin_path/accessible"; then
+          QT_PLUGIN_LIBS="$QT_PLUGIN_LIBS -L$qt_plugin_path/accessible"
           QT_LIBS="$QT_LIBS -L$qt_plugin_path/accessible"
         fi
+        QT_PLUGIN_LIBS="$QT_PLUGIN_LIBS -L$qt_plugin_path/printsupport"
         QT_LIBS="$QT_LIBS -L$qt_plugin_path/printsupport"
       fi
      if test x$use_pkgconfig = xyes; then
@@ -358,6 +363,7 @@ AC_DEFUN([_BITCOIN_QT_FIND_STATIC_PLUGINS],[
      fi
   else
     if test x$qt_plugin_path != x; then
+      QT_PLUGIN_LIBS="-L$qt_plugin_path/accessible -L$qt_plugin_path/codecs"
       QT_LIBS="$QT_LIBS -L$qt_plugin_path/accessible"
       QT_LIBS="$QT_LIBS -L$qt_plugin_path/codecs"
     fi
