@@ -97,6 +97,10 @@
   <key>NSHighResolutionCapable</key>
     <string>True</string>
 
+  <!-- Qt wallet styling assumes light UI; force Aqua appearance so macOS Dark Mode stays readable -->
+  <key>NSRequiresAquaSystemAppearance</key>
+    <true/>
+
   <key>LSAppNapIsDisabled</key>
     <string>True</string>
 
