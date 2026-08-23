@@ -28,7 +28,7 @@ class PayTxFeeTest(BitcoinTestFramework):
         # node 1 pays 0.1 DINGO on all txs due to implicit mintxfee = paytxfee
         nodes.append(start_node(1, self.options.tmpdir,
             ["-paytxfee=0.1", "-debug"]))
-DINGO
+
         # node 2 will always pay 1 DINGO on all txs because of explicit mintxfee
         nodes.append(start_node(2, self.options.tmpdir,
             ["-mintxfee=1", "-paytxfee=0.1", "-debug"]))
