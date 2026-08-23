@@ -15,10 +15,15 @@
 
 class CCoinsViewCache;
 
-/** Recommended transaction fee by Dingocoin Core developers
+/** Recommended transaction feerate by Dingocoin Core developers
   *
   * All fee defaults used throughout the client derive their
   * value from this base default.
+  *
+  * This is a *rate*, in koinus per 1000 bytes, not a flat per-transaction
+  * amount: 1 DINGO/kB, i.e. 100,000 koinus per byte. CFeeRate charges it
+  * strictly per byte, so a transaction pays in proportion to the block space
+  * it consumes rather than a fixed minimum.
   */
 static const CAmount RECOMMENDED_MIN_TX_FEE = COIN;
 
