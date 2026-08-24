@@ -36,8 +36,7 @@ jobs:
         feelimit.py,fundrawtransaction.py,getauxblock.py,getblock.py,
         getblockstats.py,invalidblockrequest.py,liststucktransactions.py,
         mempool_limit.py,p2p-acceptblock.py,p2p-fullblocktest.py,
-        p2p-policy.py,paytxfee.py,rawtransactions.py,rest.py,
-        sendheaders.py,wallet.py
+        p2p-policy.py,rest.py,sendheaders.py,wallet.py
 
     strategy:
       fail-fast: false
