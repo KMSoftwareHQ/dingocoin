@@ -1,6 +1,8 @@
 package=libICE
 $(package)_version=1.0.9
-$(package)_download_path=http://xorg.freedesktop.org/releases/individual/lib/
+# xorg.freedesktop.org now redirects to a host that fails to serve these;
+# use an x.org mirror that still carries the individual releases.
+$(package)_download_path=https://mirror.csclub.uwaterloo.ca/x.org/individual/lib/
 $(package)_file_name=$(package)-$($(package)_version).tar.bz2
 $(package)_sha256_hash=8f7032f2c1c64352b5423f6b48a8ebdc339cc63064af34d66a6c9aa79759e202
 $(package)_dependencies=xtrans xproto

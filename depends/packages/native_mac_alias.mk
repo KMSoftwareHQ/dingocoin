@@ -1,6 +1,7 @@
 package=native_mac_alias
 $(package)_version=1.1.0
-$(package)_download_path=https://github.com/al45tair/mac_alias/archive/
+# GitHub no longer serves bare /archive/<tag>; refs/tags/ is required.
+$(package)_download_path=https://github.com/al45tair/mac_alias/archive/refs/tags/
 $(package)_download_file=v$($(package)_version).tar.gz
 $(package)_file_name=mac_alias-$($(package)_version).tar.gz
 $(package)_sha256_hash=b10cb44ecb64fc25283fae7a9cf365d2829377d84e37b9c21100aca8757509be
